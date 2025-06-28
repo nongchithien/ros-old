@@ -1,0 +1,2 @@
+robot_fablab
+-DCATKIN_DEVEL_PREFIX=/home/bach/robot_fablab_ws/devel -DCMAKE_INSTALL_PREFIX=/home/bach/robot_fablab_ws/install -G Unix Makefiles
