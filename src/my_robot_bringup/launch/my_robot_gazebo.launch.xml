@@ -1,0 +1,38 @@
+<launch>
+    <let name="urdf_path"
+        value="$(find-pkg-share my_robot_description)/urdf/my_robot.urdf.xacro" />
+    <let name="rviz_config_path"
+        value="$(find-pkg-share my_robot_bringup)/rviz/urdf_config.rviz" />
+    <node pkg="robot_state_publisher" exec="robot_state_publisher">
+        <param name="robot_description"
+            value="$(command 'xacro $(var urdf_path)')" />
+    </node>
+    <!-- Include the Gazebo world file -->
+    <include file="$(find-pkg-share gazebo_ros)/launch/gazebo.launch.py">
+        <arg name="world" value="$(find-pkg-share my_robot_bringup)/worlds/world.world" />
+    </include>
+
+    <!-- ✅ Add slam_toolbox -->
+    <include file="$(find-pkg-share slam_toolbox)/launch/online_async_launch.py">
+        <arg name="params_file"
+            value="$(find-pkg-share my_robot_bringup)/config/mapper_params_online_async.yaml" />
+        <arg name="use_sim_time" value="true" />
+    </include>
+
+    <!-- Using meshes -->
+    <node pkg="controller_manager" exec="ros2_control_node" output="screen">
+        <param name="robot_description" value="$(command 'xacro $(var urdf_path)')" />
+        <param from="$(find-pkg-share my_robot_bringup)/config/ros2_controllers.yaml" />
+    </node>
+
+    <node pkg="controller_manager" exec="spawner"
+        args="joint_state_broadcaster --controller-manager /controller_manager" />
+    <node pkg="controller_manager" exec="spawner"
+        args="diff_drive_controller --controller-manager /controller_manager" />
+
+    <node pkg="gazebo_ros" exec="spawn_entity.py"
+        args="-topic robot_description -entity my_robot" />
+    <node pkg="rviz2" exec="rviz2" output="screen"
+        args="-d $(var rviz_config_path)" /> <!-- Launch RViz with the specified configuration with
+    args...-->
+</launch>
